@@ -63,7 +63,7 @@ A powerful online IDE that lets you write, run, and save code in Python, C++, an
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/vishak45/online-IDE.git
+   git clone https://github.com/taulee/online-IDE.git
    cd online-IDE
    ```
 
