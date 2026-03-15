@@ -1,91 +1,112 @@
-# Online IDE (多用户版)
+# Online IDE（多用户教学版）
 
-支持在浏览器中编写并运行 Python / C++ / Node.js 代码，后端在服务器执行并返回结果。  
-已新增老师/学生多用户体系、权限管理、学生存储隔离、学生向老师提交代码等能力。
+一个基于 Docker 沙箱执行的在线编程平台，支持 Python / C++ / Node.js。项目包含老师/学生角色体系、权限控制、文件隔离、代码提交与审阅。
 
-## 功能总览
+本仓库当前版本已修复执行服务中的容器日志竞态问题（会导致 `[Exit Code: -1]`），并将前端界面文案全面汉化。
+
+## 1. 功能概览
 
 - 浏览器代码编辑（Monaco Editor）
-- 代码运行（Docker 隔离执行）
-- 文件保存与加载（MongoDB）
-- 用户登录（JWT）
-- 角色体系：老师 / 学生
-- 老师管理用户：添加、删除、修改权限、启停账号
-- 学生文件隔离：学生只能看到自己的文件
-- 学生提交代码给老师：提交文件自动加前缀 `学生用户名_文件名`
-- 局域网 / 公网访问：通过 `服务器IP:端口` 使用
+- 在线运行代码（Docker 隔离执行）
+- 标准输入（stdin）支持
+- 个人文件保存/加载/删除（按用户隔离）
+- JWT 登录鉴权
+- 用户角色：老师 / 学生
+- 老师管理用户与权限
+- 学生提交代码给老师，老师可查看并载入提交内容
 
-## 系统架构
+## 2. 技术栈
+
+- 前端：React 18 + Axios + Monaco Editor + Nginx
+- 后端：Node.js + Express + Mongoose + dockerode + JWT
+- 数据库：MongoDB 7
+- 运行沙箱：独立语言镜像（Python / GCC / Node.js）
+- 编排：Docker Compose
+
+## 3. 系统架构
 
 ```text
-浏览器(任意联网电脑)
-   │  HTTP
-   ▼
-前端 Nginx + React (3000)
-   │  /api 反向代理
-   ▼
-后端 Express (5000)
-   ├─ JWT 鉴权 + 权限控制
-   ├─ 文件/提交/用户管理
-   ├─ 代码执行调度
-   ▼
-MongoDB (27017)
-   ▲
-后端通过 Docker Engine 启动语言沙箱容器执行代码
+Browser
+  │
+  ▼
+Frontend (Nginx + React, :3000)
+  │  /api reverse proxy
+  ▼
+Backend (Express, :5000)
+  ├─ Auth / Users / Files / Submissions
+  ├─ Execute Route -> Docker Service
+  └─ MongoDB access
+  │
+  ├──────────────► MongoDB (:27017)
+  │
+  └──────────────► Docker Engine (/var/run/docker.sock)
+                     └─ create language container
+                        └─ run code + collect logs
 ```
 
-## 角色与权限
+## 4. 目录结构
 
-用户字段包含 `role` 与 `permissions`。
+```text
+online-IDE/
+├── docker-compose.yml
+├── Docker/
+│   ├── python/Dockerfile
+│   ├── cpp/Dockerfile
+│   └── nodejs/Dockerfile
+├── backend/
+│   ├── Dockerfile
+│   └── src/
+│       ├── server.js
+│       ├── services/dockerService.js
+│       ├── middleware/auth.js
+│       ├── routes/
+│       │   ├── auth.js
+│       │   ├── execute.js
+│       │   ├── files.js
+│       │   ├── users.js
+│       │   └── submissions.js
+│       ├── models/
+│       │   ├── User.js
+│       │   ├── File.js
+│       │   └── Submission.js
+│       └── bootstrap/seedDefaultTeacher.js
+└── frontend/
+    ├── Dockerfile
+    ├── nginx.conf
+    └── src/
+        ├── App.js
+        ├── services/api.js
+        └── components/
+```
 
-- 老师默认权限：
-  - `canManageUsers=true`
-  - `canReviewSubmissions=true`
-  - `canRunCode=true`
-  - `canSaveFiles=true`
-- 学生默认权限：
-  - `canSubmitCode=true`
-  - `canRunCode=true`
-  - `canSaveFiles=true`
+## 5. 快速启动
 
-老师可在前端「用户管理」中修改任意用户权限。
+### 5.1 依赖前提
 
-## 关键业务规则
+- Docker Engine + Docker Compose
+- 建议 Linux 服务器（需允许挂载 `/var/run/docker.sock`）
 
-1. 文件隔离：
-   - 文件保存时绑定 `owner=userId`
-   - 查询/读取/更新/删除文件时仅允许访问自己的文件
-2. 学生提交：
-   - 学生选择老师并提交代码
-   - 后端生成提交文件名：`学生用户名_原文件名`
-3. 用户管理：
-   - 仅具备 `canManageUsers` 的账号可进行添加/删除/更新用户
-
-## 快速启动（Docker Compose）
+### 5.2 一键启动
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-启动后访问：
+访问地址：
 
 - 前端：`http://<服务器IP>:3000`
 - 后端健康检查：`http://<服务器IP>:5000/api/health`
 
-> 若服务器有公网 IP，放通安全组/防火墙端口 `3000`（前端）和可选 `5000`（调试 API）。
-
-## 首次登录
-
-系统在 MongoDB 中不存在老师账号时会自动创建默认老师：
+### 5.3 默认老师账号（首次自动创建）
 
 - 用户名：`teacher`
 - 密码：`teacher123`
 
-请上线后立刻在用户管理中修改默认密码，并替换 JWT 密钥。
+建议上线后立即修改默认密码与 `JWT_SECRET`。
 
-## 环境变量
+## 6. 环境变量
 
-### backend/.env
+### 6.1 后端（`backend/.env`）
 
 ```env
 PORT=5000
@@ -96,62 +117,196 @@ DEFAULT_TEACHER_PASSWORD=teacher123
 CORS_ORIGIN=*
 ```
 
-### frontend/.env
+说明：
+
+- `CORS_ORIGIN=*` 适合简单部署；生产建议明确域名列表
+- `MONGO_URI` 可改为外部 MongoDB
+
+### 6.2 前端（`frontend/.env`）
 
 ```env
 REACT_APP_API_URL=/api
 ```
 
-- Docker/Nginx 场景建议保持 `/api`（同域反向代理）
-- 本地前端开发模式可改为 `http://<服务器IP>:5000/api`
+- 容器部署建议保持 `/api`（由 Nginx 反代后端）
+- 前后端分离开发时可改成 `http://<IP>:5000/api`
 
-## API 变更摘要
+## 7. 执行链路与隔离策略（核心）
 
-- `POST /api/auth/login` 登录
-- `GET /api/auth/me` 获取当前用户
-- `GET/POST/PUT/DELETE /api/users` 老师用户管理
-- `GET/POST /api/submissions...` 提交与查看提交
-- `GET/POST/PUT/DELETE /api/files` 仅访问本人文件
-- `POST /api/execute` 需登录且具备运行权限
+代码执行入口：`POST /api/execute`
 
-## 前端使用流程
+后端执行流程（`backend/src/services/dockerService.js`）：
 
-- 老师：
-  - 登录后可打开「用户管理」添加/删除学生或老师账号
-  - 在「学生提交」中查看并载入学生提交代码
-- 学生：
-  - 仅看到自己的文件列表
-  - 点击「提交给老师」选择老师并提交
-  - 在「我的提交」查看历史提交
+1. 生成 `executionId`，创建临时目录：`/tmp/online-ide/<executionId>`
+2. 写入代码文件与 `stdin.txt`
+3. 基于语言选择镜像与命令：
+   - Python：`python3 main.py < /code/stdin.txt`
+   - C++：`g++ ... && /tmp/output < /code/stdin.txt`
+   - Node.js：`node main.js < /code/stdin.txt`
+4. 以 `runner` 用户启动容器，挂载 `/code`（只读）
+5. 等待结束或超时（30 秒）
+6. 读取 stdout/stderr 日志并回传
+7. 删除容器与临时目录
 
-## 局域网/公网部署建议
+资源限制：
 
-1. 使用 Docker Compose 在服务器启动服务。
-2. 通过 `服务器IP:3000` 统一访问前端。
-3. 使用 Nginx `/api` 代理后端，避免浏览器跨域配置复杂化。
-4. 公网部署建议再加一层反向代理（如 Caddy/Nginx）并启用 HTTPS。
+- 执行超时：30s
+- 内存限制：128MB
+- 网络：`NetworkMode=none`
 
-## 目录结构
+## 8. 本次关键修复说明（`Exit Code: -1`）
+
+### 8.1 根因
+
+旧逻辑使用 `AutoRemove: true`。容器退出后可能立即被 Docker 删除，后端再调用 `container.logs()` 时会出现竞态失败，最终被统一包装为：
 
 ```text
-online-IDE/
-├── docker-compose.yml
-├── backend/
-│   ├── src/
-│   │   ├── bootstrap/seedDefaultTeacher.js
-│   │   ├── middleware/auth.js
-│   │   ├── models/{User,File,Submission}.js
-│   │   ├── routes/{auth,users,files,execute,submissions}.js
-│   │   └── server.js
-├── frontend/
-│   ├── nginx.conf
-│   └── src/
-│       ├── App.js
-│       ├── components/
-│       │   ├── LoginForm.js
-│       │   ├── UserManagement.js
-│       │   ├── SubmissionPanel.js
-│       │   └── SubmitCodeModal.js
-│       └── services/api.js
-└── Docker/
+[Error]
+Server error please run again
+[Exit Code: -1]
 ```
+
+Python 程序通常退出更快，因此失败概率更高；Node/C++ 因时序差异表现为“偶发失败”。
+
+### 8.2 修复点
+
+- 关闭 `AutoRemove`，改为后端显式 `remove({ force: true })`
+- 增加超时强制终止（`kill`）
+- 优化错误映射（镜像缺失、容器丢失、超时）
+- 日志与容器清理逻辑统一收敛到 `finally`
+
+### 8.3 行为变化
+
+- 超时退出码变为 `124`
+- 缺失镜像时会返回明确提示（需 `docker compose build`）
+- 不再使用泛化报错 `Server error please run again`
+
+## 9. 权限模型
+
+权限字段位于 `User.permissions`：
+
+- `canRunCode`：运行代码
+- `canSaveFiles`：保存/删除文件
+- `canSubmitCode`：学生提交代码
+- `canManageUsers`：用户管理
+- `canReviewSubmissions`：查看学生提交
+
+默认权限：
+
+- `teacher`：运行、保存、提交审阅、用户管理
+- `student`：运行、保存、提交（不可管理用户/审阅）
+
+鉴权中间件：`backend/src/middleware/auth.js`
+
+- `authenticateToken`：校验 JWT + 用户激活状态
+- `requirePermission(key)`：细粒度权限校验
+
+## 10. 数据模型
+
+### 10.1 User
+
+- `username`（唯一，lowercase）
+- `name`
+- `passwordHash`（默认不返回）
+- `role`（teacher/student）
+- `permissions`
+- `isActive`
+
+### 10.2 File
+
+- `owner`（用户 ID）
+- `name`
+- `content`
+- `language`（python/cpp/nodejs）
+- `timestamps`
+
+### 10.3 Submission
+
+- `student` / `teacher`
+- `originalFileName`
+- `submittedFileName`（自动 `学生用户名_文件名`）
+- `language`
+- `content`
+- `timestamps`
+
+## 11. API 概览
+
+- `POST /api/auth/login`：登录
+- `GET /api/auth/me`：当前用户信息
+- `POST /api/execute`：运行代码
+- `GET/POST/PUT/DELETE /api/files`：个人文件
+- `GET/POST/PUT/DELETE /api/users`：用户管理（需权限）
+- `GET /api/submissions/teachers`：老师列表
+- `POST /api/submissions`：学生提交
+- `GET /api/submissions/mine`：我的提交
+- `GET /api/submissions/received`：老师查看收到的提交
+
+## 12. 前端说明（已汉化）
+
+- 主界面按钮与状态提示已全部中文
+- 文件管理、用户管理、提交面板、输出终端已中文化
+- 登录页、占位文案、错误提示已中文化
+- 接口错误提示与后端错误文案已统一中文
+
+## 13. 常见问题排查
+
+### 13.1 运行时报镜像不存在
+
+现象：运行返回“运行环境镜像不存在”
+
+处理：
+
+```bash
+docker compose build python-compiler cpp-compiler nodejs-runtime backend frontend
+docker compose up -d
+```
+
+### 13.2 仍然出现执行失败
+
+按顺序检查：
+
+1. `docker ps` 确认 `backend` 正常运行
+2. `docker logs <backend容器名>` 查看执行报错
+3. 宿主机是否可访问 `/var/run/docker.sock`
+4. `/tmp/online-ide` 是否可写
+
+### 13.3 无法登录 / 401
+
+- 检查 `JWT_SECRET` 是否在后端重启后变更
+- 清除浏览器本地 token 后重新登录
+
+### 13.4 Mongo 连接失败
+
+- 检查 `MONGO_URI` 指向
+- 检查 `mongodb` 容器健康状态
+
+## 14. 本地开发建议
+
+后端开发：
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+前端开发：
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+开发模式下建议设置：
+
+- 前端 `REACT_APP_API_URL=http://localhost:5000/api`
+
+## 15. 安全与生产建议
+
+- 替换默认老师账号密码
+- 使用高强度 `JWT_SECRET`
+- 限制 `CORS_ORIGIN` 为可信域名
+- 生产环境通过 HTTPS 暴露服务
+- 对外部署时建议在外层增加网关限流
+

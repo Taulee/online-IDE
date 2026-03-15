@@ -17,6 +17,19 @@ const DEFAULT_TEACHER_PERMISSIONS = {
   canReviewSubmissions: true
 };
 
+const ROLE_LABELS = {
+  teacher: '老师',
+  student: '学生'
+};
+
+const PERMISSION_LABELS = {
+  canRunCode: '允许运行代码',
+  canSaveFiles: '允许保存文件',
+  canSubmitCode: '允许提交代码',
+  canManageUsers: '允许管理用户',
+  canReviewSubmissions: '允许查看提交'
+};
+
 function getRoleDefaults(role) {
   return role === 'teacher' ? DEFAULT_TEACHER_PERMISSIONS : DEFAULT_STUDENT_PERMISSIONS;
 }
@@ -172,7 +185,7 @@ function UserManagement({ currentUser, onClose }) {
               {users.map((user) => (
                 <li key={user._id} className="user-item">
                   <div>
-                    <strong>{user.username}</strong> ({user.role})
+                    <strong>{user.username}</strong>（{ROLE_LABELS[user.role] || user.role}）
                     {!user.isActive && <span className="tag danger">禁用</span>}
                     {currentUser._id === user._id && <span className="tag">当前</span>}
                   </div>
@@ -231,7 +244,7 @@ function UserManagement({ currentUser, onClose }) {
                     checked={Boolean(editingUser.permissions[key])}
                     onChange={(e) => handlePermissionChange(key, e.target.checked)}
                   />
-                  {key}
+                  {PERMISSION_LABELS[key] || key}
                 </label>
               ))}
             </div>

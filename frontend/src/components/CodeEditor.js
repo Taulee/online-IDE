@@ -15,7 +15,7 @@ function CodeEditor({ code, language, onChange }) {
   return (
     <div className="code-editor">
       <div className="editor-header">
-        <span>Editor</span>
+        <span>编辑器</span>
       </div>
       <Editor
         height="100%"

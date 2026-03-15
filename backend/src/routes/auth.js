@@ -11,17 +11,17 @@ router.post('/login', async (req, res) => {
     const password = req.body.password || '';
 
     if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+      return res.status(400).json({ error: '用户名和密码不能为空' });
     }
 
     const user = await User.findOne({ username }).select('+passwordHash');
     if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: '用户名或密码错误，或账号已停用' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: '用户名或密码错误，或账号已停用' });
     }
 
     const token = signUserToken(user);
@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
       user: user.toPublicJSON()
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: '登录失败，请稍后重试' });
   }
 });
 

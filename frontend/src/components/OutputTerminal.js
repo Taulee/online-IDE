@@ -12,7 +12,7 @@ function OutputTerminal({ output }) {
   return (
     <div className="output-terminal">
       <div className="terminal-header">
-        <span>Output</span>
+        <span>输出</span>
         <div className="terminal-actions">
           <span className="terminal-dot red"></span>
           <span className="terminal-dot yellow"></span>
@@ -20,7 +20,7 @@ function OutputTerminal({ output }) {
         </div>
       </div>
       <div className="terminal-content" ref={terminalRef}>
-        <pre>{output || 'Click "Run" to execute your code...'}</pre>
+        <pre>{output || '点击“运行”来执行代码...'}</pre>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ async function authenticateToken(req, res, next) {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: '未授权，请先登录' });
   }
 
   try {
@@ -18,20 +18,20 @@ async function authenticateToken(req, res, next) {
     const user = await User.findById(payload.userId);
 
     if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: '登录状态无效或账号已被停用' });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: '登录状态已失效，请重新登录' });
   }
 }
 
 function requirePermission(permissionKey) {
   return (req, res, next) => {
     if (!req.user?.permissions?.[permissionKey]) {
-      return res.status(403).json({ error: 'Forbidden' });
+      return res.status(403).json({ error: '当前账号没有该操作权限' });
     }
     next();
   };

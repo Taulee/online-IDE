@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
       users: users.map((user) => user.toPublicJSON())
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '获取用户列表失败' });
   }
 });
 
@@ -32,12 +32,12 @@ router.post('/', async (req, res) => {
     const permissions = buildPermissions(role, req.body.permissions || {});
 
     if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+      return res.status(400).json({ error: '用户名和密码不能为空' });
     }
 
     const exists = await User.findOne({ username });
     if (exists) {
-      return res.status(409).json({ error: 'Username already exists' });
+      return res.status(409).json({ error: '用户名已存在' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
       user: user.toPublicJSON()
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: '创建用户失败' });
   }
 });
 
@@ -62,7 +62,7 @@ router.put('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('+passwordHash');
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: '用户不存在' });
     }
 
     const role = req.body.role === 'teacher' ? 'teacher' : (req.body.role === 'student' ? 'student' : user.role);
@@ -83,19 +83,19 @@ router.put('/:id', async (req, res) => {
       user: user.toPublicJSON()
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: '更新用户失败' });
   }
 });
 
 router.delete('/:id', async (req, res) => {
   try {
     if (req.user._id.toString() === req.params.id) {
-      return res.status(400).json({ error: 'Cannot delete current logged-in user' });
+      return res.status(400).json({ error: '不能删除当前登录账号' });
     }
 
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: '用户不存在' });
     }
 
     await File.deleteMany({ owner: user._id });
@@ -103,9 +103,9 @@ router.delete('/:id', async (req, res) => {
       $or: [{ student: user._id }, { teacher: user._id }]
     });
 
-    return res.json({ success: true, message: 'User deleted' });
+    return res.json({ success: true, message: '用户已删除' });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: '删除用户失败' });
   }
 });
 

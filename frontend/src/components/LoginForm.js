@@ -35,7 +35,7 @@ function LoginForm({ onLoginSuccess }) {
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="例如：teacher"
+          placeholder="例如：zhangsan"
           required
         />
 

@@ -47,7 +47,7 @@ function SubmissionPanel({ mode, onClose, onLoadCode }) {
                     : `老师：${item.teacher?.username || '-'}`}
                 </div>
                 <div className="small-text">
-                  {new Date(item.createdAt).toLocaleString()}
+                  {new Date(item.createdAt).toLocaleString('zh-CN')}
                 </div>
               </div>
               {mode === 'teacher' && (

@@ -13,7 +13,7 @@ function FileManager({ onSelect, onClose, canDelete = true, refreshKey = 0 }) {
       setFiles(data.files || []);
       setError(null);
     } catch (err) {
-      setError('Failed to load files');
+      setError('加载文件列表失败');
     } finally {
       setLoading(false);
     }
@@ -25,13 +25,13 @@ function FileManager({ onSelect, onClose, canDelete = true, refreshKey = 0 }) {
 
   const handleDelete = async (e, fileId) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this file?')) return;
+    if (!window.confirm('确定删除这个文件吗？')) return;
     
     try {
       await deleteFile(fileId);
       setFiles((prev) => prev.filter((f) => f._id !== fileId));
     } catch (err) {
-      setError('Failed to delete file');
+      setError('删除文件失败');
     }
   };
 
@@ -45,9 +45,9 @@ function FileManager({ onSelect, onClose, canDelete = true, refreshKey = 0 }) {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -56,15 +56,15 @@ function FileManager({ onSelect, onClose, canDelete = true, refreshKey = 0 }) {
   return (
     <div className="file-manager">
       <div className="file-manager-header">
-        <h3>Saved Files</h3>
+        <h3>已保存文件</h3>
         <button className="close-btn" onClick={onClose}>×</button>
       </div>
       
       <div className="file-manager-content">
-        {loading && <div className="loading">Loading...</div>}
+        {loading && <div className="loading">加载中...</div>}
         {error && <div className="error">{error}</div>}
         {!loading && files.length === 0 && (
-          <div className="empty">No saved files yet</div>
+          <div className="empty">还没有保存的文件</div>
         )}
         
         <ul className="file-list">

@@ -10,18 +10,18 @@ router.post('/', requirePermission('canRunCode'), async (req, res) => {
   try {
     const { code, language, stdin } = req.body;
 
-    if (!code) {
-      return res.status(400).json({ error: 'Code is required' });
+    if (typeof code !== 'string') {
+      return res.status(400).json({ error: 'code 字段必须是字符串' });
     }
 
     if (!language) {
-      return res.status(400).json({ error: 'Language is required' });
+      return res.status(400).json({ error: 'language 字段不能为空' });
     }
 
     const validLanguages = ['python', 'cpp', 'nodejs'];
     if (!validLanguages.includes(language)) {
       return res.status(400).json({ 
-        error: `Invalid language. Supported: ${validLanguages.join(', ')}` 
+        error: `不支持的语言：${language}。支持：${validLanguages.join(', ')}` 
       });
     }
 
@@ -32,8 +32,7 @@ router.post('/', requirePermission('canRunCode'), async (req, res) => {
     console.error('Execution error:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Internal server error',
-      message: error.message 
+      error: '服务器内部错误'
     });
   }
 });

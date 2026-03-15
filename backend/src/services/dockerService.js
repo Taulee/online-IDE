@@ -39,6 +39,7 @@ async function executeCode(code, language, stdin = '') {
   const filename = `main${config.extension}`;
   const filepath = path.join(tempDir, filename);
   const stdinPath = path.join(tempDir, 'stdin.txt');
+  let container = null;
 
   try {
     // Create temp directory and write code + stdin
@@ -47,7 +48,7 @@ async function executeCode(code, language, stdin = '') {
     await fs.writeFile(stdinPath, stdin);
 
     // Create container
-    const container = await docker.createContainer({
+    container = await docker.createContainer({
       Image: config.image,
       Cmd: config.command(filename),
       WorkingDir: '/code',
@@ -56,7 +57,7 @@ async function executeCode(code, language, stdin = '') {
         Memory: MEMORY_LIMIT,
         MemorySwap: MEMORY_LIMIT,
         NetworkMode: 'none',
-        AutoRemove: true,
+        AutoRemove: false,
         ReadonlyRootfs: false,
         SecurityOpt: ['no-new-privileges:true']
       },
@@ -93,25 +94,32 @@ async function executeCode(code, language, stdin = '') {
     };
 
   } catch (error) {
-    // Try to stop container if timeout
+    console.error(`[execute:${executionId}]`, error);
+
     if (error.message === 'Execution timeout') {
-      try {
-        const containers = await docker.listContainers();
-        // Container should auto-remove, but try to kill any stuck ones
-      } catch (e) {
-        // Ignore cleanup errors
-      }
+      await stopContainer(container);
+      return {
+        success: false,
+        output: '',
+        error: `代码执行超时（>${EXECUTION_TIMEOUT / 1000} 秒）`,
+        exitCode: 124,
+        executionId
+      };
     }
+
+    const friendlyError = mapExecutionError(error, config.image);
 
     return {
       success: false,
       output: '',
-      error: "Server error please run again",
+      error: friendlyError,
       exitCode: -1,
       executionId
     };
 
   } finally {
+    await removeContainer(container);
+
     // Cleanup temp directory
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
@@ -121,7 +129,49 @@ async function executeCode(code, language, stdin = '') {
   }
 }
 
+function mapExecutionError(error, imageName) {
+  const message = `${error?.message || ''} ${error?.reason || ''}`;
+  if (error?.statusCode === 404 || /No such image/i.test(message)) {
+    return `运行环境镜像不存在：${imageName}。请先执行 docker compose build。`;
+  }
+  if (/No such container/i.test(message)) {
+    return '执行容器意外丢失，请重试。';
+  }
+  return '服务器执行异常，请重试。';
+}
+
+async function stopContainer(container) {
+  if (!container) return;
+  try {
+    await container.kill();
+  } catch (error) {
+    if (error?.statusCode !== 409 && error?.statusCode !== 404) {
+      console.error('Failed to kill container:', error.message || error);
+    }
+  }
+}
+
+async function removeContainer(container) {
+  if (!container) return;
+  try {
+    await container.remove({ force: true });
+  } catch (error) {
+    if (error?.statusCode !== 404) {
+      console.error('Failed to remove container:', error.message || error);
+    }
+  }
+}
+
 function parseDockerLogs(buffer) {
+  if (!buffer) {
+    return { stdout: '', stderr: '' };
+  }
+
+  if (!Buffer.isBuffer(buffer)) {
+    const text = buffer.toString('utf8');
+    return { stdout: text, stderr: '' };
+  }
+
   let stdout = '';
   let stderr = '';
   let offset = 0;

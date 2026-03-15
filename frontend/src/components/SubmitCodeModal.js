@@ -32,12 +32,22 @@ function SubmitCodeModal({ open, code, language, defaultFileName, onClose, onSuc
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const cleanFileName = fileName.trim();
+    if (!cleanFileName) {
+      setError('文件名不能为空');
+      return;
+    }
+    if (!teacherId) {
+      setError('请选择要提交的老师');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
     try {
       await submitCode({
         teacherId,
-        fileName,
+        fileName: cleanFileName,
         language,
         content: code
       });
@@ -65,7 +75,7 @@ function SubmitCodeModal({ open, code, language, defaultFileName, onClose, onSuc
         >
           {teachers.map((teacher) => (
             <option key={teacher._id} value={teacher._id}>
-              {teacher.name} ({teacher.username})
+              {(teacher.name || teacher.username)}（{teacher.username}）
             </option>
           ))}
         </select>

@@ -28,29 +28,29 @@ router.get('/teachers', async (req, res) => {
       }))
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '加载老师列表失败' });
   }
 });
 
 router.post('/', requirePermission('canSubmitCode'), async (req, res) => {
   try {
     if (req.user.role !== 'student') {
-      return res.status(403).json({ error: 'Only student users can submit code' });
+      return res.status(403).json({ error: '只有学生账号可以提交代码' });
     }
 
     const { teacherId, fileName, language, content } = req.body;
     const cleanName = sanitizeFileName((fileName || '').trim());
 
     if (!teacherId || !cleanName || !language) {
-      return res.status(400).json({ error: 'teacherId, fileName and language are required' });
+      return res.status(400).json({ error: 'teacherId、fileName、language 不能为空' });
     }
     if (!VALID_LANGUAGES.includes(language)) {
-      return res.status(400).json({ error: 'Invalid language' });
+      return res.status(400).json({ error: '不支持的语言类型' });
     }
 
     const teacher = await User.findOne({ _id: teacherId, role: 'teacher', isActive: true });
     if (!teacher) {
-      return res.status(404).json({ error: 'Teacher not found' });
+      return res.status(404).json({ error: '老师账号不存在或已停用' });
     }
 
     const submittedFileName = `${req.user.username}_${cleanName}`;
@@ -69,7 +69,7 @@ router.post('/', requirePermission('canSubmitCode'), async (req, res) => {
       submission
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '提交代码失败' });
   }
 });
 
@@ -81,7 +81,7 @@ router.get('/mine', requirePermission('canSubmitCode'), async (req, res) => {
 
     res.json({ success: true, submissions });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '加载我的提交失败' });
   }
 });
 
@@ -93,7 +93,7 @@ router.get('/received', requirePermission('canReviewSubmissions'), async (req, r
 
     res.json({ success: true, submissions });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '加载收到的提交失败' });
   }
 });
 

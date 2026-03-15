@@ -18,34 +18,34 @@ import {
 import './styles/App.css';
 
 const DEFAULT_CODE = {
-  python: `# Python Example
+  python: `# Python 示例
 def greet(name):
-    return f"Hello, {name}!"
+    return f"你好, {name}!"
 
-print(greet("World"))
-print("Welcome to Online IDE!")
+print(greet("世界"))
+print("欢迎使用在线 IDE！")
 `,
-  cpp: `// C++ Example
+  cpp: `// C++ 示例
 #include <iostream>
 #include <string>
 
 std::string greet(const std::string& name) {
-    return "Hello, " + name + "!";
+    return "你好, " + name + "!";
 }
 
 int main() {
-    std::cout << greet("World") << std::endl;
-    std::cout << "Welcome to Online IDE!" << std::endl;
+    std::cout << greet("世界") << std::endl;
+    std::cout << "欢迎使用在线 IDE！" << std::endl;
     return 0;
 }
 `,
-  nodejs: `// Node.js Example
+  nodejs: `// Node.js 示例
 function greet(name) {
-    return \`Hello, \${name}!\`;
+    return \`你好, \${name}!\`;
 }
 
-console.log(greet("World"));
-console.log("Welcome to Online IDE!");
+console.log(greet("世界"));
+console.log("欢迎使用在线 IDE！");
 `
 };
 
@@ -114,25 +114,26 @@ function App() {
     }
 
     setIsRunning(true);
-    setOutput('Running...\n');
+    setOutput('运行中...\n');
 
     try {
       const result = await executeCode(code, language, stdin);
-      let outputText = '';
-
-      if (result.output) outputText += result.output;
-      if (result.error) outputText += `\n[Error]\n${result.error}`;
+      const blocks = [];
+      if (result.output) blocks.push(result.output);
+      if (result.error) blocks.push(`[Error]\n${result.error}`);
       if (!result.success && result.exitCode !== undefined) {
-        outputText += `\n[Exit Code: ${result.exitCode}]`;
+        blocks.push(`[Exit Code: ${result.exitCode}]`);
       }
 
-      setOutput(outputText || 'Program completed with no output.');
+      const outputText = blocks.join('\n');
+
+      setOutput(outputText || '程序执行完成，无输出。');
     } catch (error) {
       if (error.response?.status === 401) {
         logout();
         return;
       }
-      setOutput(`[Error] ${error.response?.data?.error || error.message}`);
+      setOutput(`[Error] ${getErrorMessage(error, '代码执行请求失败，请稍后重试')}`);
     } finally {
       setIsRunning(false);
     }
@@ -144,8 +145,14 @@ function App() {
       return;
     }
 
-    const fileName = prompt('Enter file name:', currentFile?.name || `main.${getExtension(language)}`);
-    if (!fileName) return;
+    const inputName = prompt('请输入文件名：', currentFile?.name || `main.${getExtension(language)}`);
+    if (inputName === null) return;
+
+    const fileName = inputName.trim();
+    if (!fileName) {
+      setOutput('[Error] 文件名不能为空');
+      return;
+    }
 
     try {
       const response = await saveFile({
@@ -157,13 +164,13 @@ function App() {
       const savedFile = response.file || response;
       setCurrentFile(savedFile);
       setFileRefreshKey((v) => v + 1);
-      setOutput(`File saved: ${savedFile.name}`);
+      setOutput(`文件已保存：${savedFile.name}`);
     } catch (error) {
       if (error.response?.status === 401) {
         logout();
         return;
       }
-      setOutput(`[Error] Failed to save: ${error.response?.data?.error || error.message}`);
+      setOutput(`[Error] 保存失败：${getErrorMessage(error, '请稍后重试')}`);
     }
   }, [code, language, currentFile, logout, user]);
 
@@ -176,9 +183,13 @@ function App() {
       setCurrentFile(loadedFile);
       setShowFileManager(false);
     } catch (error) {
-      setOutput(`[Error] Failed to load file: ${error.response?.data?.error || error.message}`);
+      if (error.response?.status === 401) {
+        logout();
+        return;
+      }
+      setOutput(`[Error] 读取文件失败：${getErrorMessage(error, '请稍后重试')}`);
     }
-  }, []);
+  }, [logout]);
 
   const handleNewFile = useCallback(() => {
     setCurrentFile(null);
@@ -198,7 +209,7 @@ function App() {
   }, []);
 
   if (authLoading) {
-    return <div className="loading-page">Checking session...</div>;
+    return <div className="loading-page">正在检查登录状态...</div>;
   }
 
   if (!user) {
@@ -215,7 +226,7 @@ function App() {
       <header className="header">
         <div className="header-left">
           <h1 className="logo">CodeAnywhere</h1>
-          <span className="file-name">{currentFile ? currentFile.name : 'Untitled'}</span>
+          <span className="file-name">{currentFile ? currentFile.name : '未命名'}</span>
         </div>
 
         <div className="header-center">
@@ -273,19 +284,19 @@ function App() {
                 setShowSubmissionPanel(false);
               }}
             >
-              Files
+              文件
             </button>
           )}
 
           {canSaveFiles && (
             <button className="btn btn-secondary" onClick={handleNewFile}>
-              New
+              新建
             </button>
           )}
 
           {canSaveFiles && (
             <button className="btn btn-secondary" onClick={handleSave}>
-              Save
+              保存
             </button>
           )}
 
@@ -296,7 +307,7 @@ function App() {
           )}
 
           <button className="btn btn-primary" onClick={handleRun} disabled={isRunning || !user.permissions?.canRunCode}>
-            {isRunning ? 'Running...' : '▶ Run'}
+            {isRunning ? '运行中...' : '▶ 运行'}
           </button>
 
           <button className="btn btn-secondary" onClick={logout}>
@@ -332,12 +343,12 @@ function App() {
         </div>
         <div className="output-container">
           <div className="stdin-section">
-            <div className="stdin-header">Input (stdin)</div>
+            <div className="stdin-header">输入（stdin）</div>
             <textarea
               className="stdin-input"
               value={stdin}
               onChange={(e) => setStdin(e.target.value)}
-              placeholder="Enter input values here (one per line)..."
+              placeholder="在这里输入程序标准输入，每行一个值..."
             />
           </div>
           <OutputTerminal output={output} />
@@ -363,6 +374,10 @@ function getExtension(language) {
     nodejs: 'js'
   };
   return extensions[language] || 'txt';
+}
+
+function getErrorMessage(error, fallback) {
+  return error?.response?.data?.error || fallback;
 }
 
 export default App;
