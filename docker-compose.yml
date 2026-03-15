@@ -23,6 +23,10 @@ services:
     environment:
       - PORT=5000
       - MONGO_URI=mongodb://mongodb:27017/online-ide
+      - JWT_SECRET=please-change-this-jwt-secret
+      - DEFAULT_TEACHER_USERNAME=teacher
+      - DEFAULT_TEACHER_PASSWORD=teacher123
+      - CORS_ORIGIN=*
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/online-ide:/tmp/online-ide

@@ -1,405 +1,157 @@
-# 💻 Online IDE
+# Online IDE (多用户版)
 
-> A modern, web-based code editor with real-time execution across multiple programming languages.
+支持在浏览器中编写并运行 Python / C++ / Node.js 代码，后端在服务器执行并返回结果。  
+已新增老师/学生多用户体系、权限管理、学生存储隔离、学生向老师提交代码等能力。
 
-A powerful online IDE that lets you write, run, and save code in Python, C++, and Node.js—all in your browser with containerized, secure execution.
+## 功能总览
 
-## ✨ Features
+- 浏览器代码编辑（Monaco Editor）
+- 代码运行（Docker 隔离执行）
+- 文件保存与加载（MongoDB）
+- 用户登录（JWT）
+- 角色体系：老师 / 学生
+- 老师管理用户：添加、删除、修改权限、启停账号
+- 学生文件隔离：学生只能看到自己的文件
+- 学生提交代码给老师：提交文件自动加前缀 `学生用户名_文件名`
+- 局域网 / 公网访问：通过 `服务器IP:端口` 使用
 
-- **🎨 Monaco Editor**: Professional syntax highlighting and autocomplete (same engine as VS Code)
-- **🌐 Multi-language Support**: Python 3.11 | C++ (GCC 13) | Node.js 20
-- **🐳 Docker Isolation**: Secure, containerized execution with resource limits
-- **💾 File Management**: Save and load your projects from MongoDB
-- **⚡ Real-time Output**: Instant console feedback and error messages
-- **📱 Responsive UI**: Optimized for desktop and tablet
-- **🔒 Safety First**: Non-root execution, memory limits, timeout protection
+## 系统架构
 
-## 📸 Screenshots
-
-### Main Editor Interface
-![Online IDE Editor](screenshots/op.png)
-
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    ONLINE IDE SYSTEM                            │
-└─────────────────────────────────────────────────────────────────┘
-
-    ┌──────────────┐         ┌──────────────┐      ┌────────────┐
-    │   Frontend   │────────>│   Backend    │─────>│  MongoDB   │
-    │    React     │         │  Express.js  │      │  Database  │
-    └──────────────┘         └──────┬───────┘      └────────────┘
-         :3000                      │
-                                    ▼
-                        ┌────────────────────────┐
-                        │    Docker Engine       │
-                        ├────────────────────────┤
-                        │ ┌──────┬──────┬──────┐ │
-                        │ │Python│ C++  │Node  │ │
-                        │ │ 3.11 │ GCC13│  20  │ │
-                        │ └──────┴──────┴──────┘ │
-                        └────────────────────────┘
-                              :5000
+```text
+浏览器(任意联网电脑)
+   │  HTTP
+   ▼
+前端 Nginx + React (3000)
+   │  /api 反向代理
+   ▼
+后端 Express (5000)
+   ├─ JWT 鉴权 + 权限控制
+   ├─ 文件/提交/用户管理
+   ├─ 代码执行调度
+   ▼
+MongoDB (27017)
+   ▲
+后端通过 Docker Engine 启动语言沙箱容器执行代码
 ```
 
-**Technology Stack:**
-- **Frontend**: React 18, Monaco Editor, Axios
-- **Backend**: Node.js, Express.js, MongoDB, Docker API
-- **Execution**: Docker containers with resource isolation
-- **Database**: MongoDB for persistent file storage
+## 角色与权限
 
-## ⚙️ Prerequisites
+用户字段包含 `role` 与 `permissions`。
 
-- **Docker** & **Docker Compose** (latest version)
-- **Git** (for cloning the repository)
-- **8GB RAM** minimum (for running containers)
-- **Port availability**: 3000 (frontend), 5000 (backend)
+- 老师默认权限：
+  - `canManageUsers=true`
+  - `canReviewSubmissions=true`
+  - `canRunCode=true`
+  - `canSaveFiles=true`
+- 学生默认权限：
+  - `canSubmitCode=true`
+  - `canRunCode=true`
+  - `canSaveFiles=true`
 
-## 🚀 Quick Start
+老师可在前端「用户管理」中修改任意用户权限。
 
-### Option 1: Docker Compose (Recommended)
+## 关键业务规则
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/taulee/online-IDE.git
-   cd online-IDE
-   ```
+1. 文件隔离：
+   - 文件保存时绑定 `owner=userId`
+   - 查询/读取/更新/删除文件时仅允许访问自己的文件
+2. 学生提交：
+   - 学生选择老师并提交代码
+   - 后端生成提交文件名：`学生用户名_原文件名`
+3. 用户管理：
+   - 仅具备 `canManageUsers` 的账号可进行添加/删除/更新用户
 
-2. **Start all services**
-   ```bash
-   docker compose up --build
-   ```
+## 快速启动（Docker Compose）
 
-3. **Access the application**
-   - 🌐 Frontend: [http://localhost:3000](http://localhost:3000)
-   - 🔌 Backend API: [http://localhost:5000](http://localhost:5000)
-   - 📊 MongoDB: mongodb://localhost:27017
-
-   The application should be ready in 30-60 seconds.
-
-### Option 2: Local Development
-
-**Backend Setup:**
 ```bash
-cd backend
-npm install
-npm run dev
-# Backend runs on http://localhost:5000
-```
-
-**Frontend Setup:**
-```bash
-cd frontend
-npm install
-REACT_APP_API_URL=http://localhost:5000/api npm start
-# Frontend runs on http://localhost:3000
-```
-
-> **Note**: Requires MongoDB running locally or accessible via connection string
-
-## 📖 Usage Guide
-
-### Writing Code
-1. Select your preferred language from the **Language Selector** dropdown
-2. Write your code in the **Monaco Editor** with full syntax highlighting
-3. Provide input (if needed) in the **Input (stdin)** section
-
-### Running Code
-- Click the **▶ Run** button to execute
-- Output appears in the **Output Terminal** in real-time
-- Errors are displayed with full stack traces
-
-### Managing Files
-- **Save**: Click **Save** to store files in the database
-- **New**: Click **New** to start a fresh file
-- **Files**: Click **Files** to view and load saved files
-
-### Keyboard Shortcuts
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+S` / `Cmd+S` | Save file |
-| `Ctrl+Enter` | Execute code |
-| `Ctrl+/` | Toggle comment |
-
-## 🔌 API Reference
-
-### Execute Code
-Execute code in any supported language with optional stdin.
-
-```http
-POST /api/execute
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "code": "print('Hello, World!')",
-  "language": "python",
-  "stdin": ""
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "output": "Hello, World!\n",
-  "error": null,
-  "exitCode": 0,
-  "executionTime": 245
-}
-```
-
-**Supported Languages:**
-- `python` - Python 3.11
-- `cpp` - C++ with GCC 13
-- `nodejs` - Node.js 20
-
----
-
-### File Management
-
-#### List All Files
-```http
-GET /api/files
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "files": [
-    {
-      "_id": "507f1f77bcf86cd799439011",
-      "name": "hello.py",
-      "language": "python",
-      "createdAt": "2026-02-18T10:30:00Z",
-      "updatedAt": "2026-02-18T10:30:00Z"
-    }
-  ]
-}
-```
-
-#### Get Single File
-```http
-GET /api/files/:id
-```
-
-#### Create File
-```http
-POST /api/files
-Content-Type: application/json
-
-{
-  "name": "script.py",
-  "language": "python",
-  "content": "print('Hello')"
-}
-```
-
-#### Update File
-```http
-PUT /api/files/:id
-Content-Type: application/json
-
-{
-  "name": "updated.py",
-  "content": "print('Updated')"
-}
-```
-
-#### Delete File
-```http
-DELETE /api/files/:id
-```
-
-## 📁 Project Structure
-
-```
-online-IDE/
-├── 📄 docker-compose.yml        # Docker orchestration configuration
-├── 📄 README.md                 # This file
-├── backend/                     # Express.js backend server
-│   ├── Dockerfile
-│   ├── package.json
-│   └── src/
-│       ├── server.js            # Main Express application
-│       ├── models/
-│       │   ├── File.js          # MongoDB file schema
-│       │   └── userModel.js     # User schema (future)
-│       ├── routes/
-│       │   ├── execute.js       # Code execution endpoints
-│       │   └── files.js         # File CRUD endpoints
-│       └── services/
-│           └── dockerService.js # Docker container management
-├── frontend/                    # React application
-│   ├── Dockerfile
-│   ├── nginx.conf               # Production server config
-│   ├── package.json
-│   ├── public/
-│   │   └── index.html           # Entry point
-│   └── src/
-│       ├── App.js               # Main component
-│       ├── index.js             # React entry point
-│       ├── components/
-│       │   ├── CodeEditor.js    # Monaco Editor wrapper
-│       │   ├── OutputTerminal.js# Output display
-│       │   ├── FileManager.js   # File browser
-│       │   └── LanguageSelector.js  # Language picker
-│       ├── services/
-│       │   └── api.js           # HTTP client
-│       └── styles/
-│           ├── App.css          # Main styles
-│           └── index.css        # Global styles
-└── Docker/                      # Execution environments
-    ├── python/
-    │   └── Dockerfile           # Python 3.11 runtime
-    ├── cpp/
-    │   └── Dockerfile           # C++ GCC 13 runtime
-    └── nodejs/
-        └── Dockerfile           # Node.js 20 runtime
-```
-
-## 🔒 Security Features
-
-Our execution environment is hardened against malicious code:
-
-| Feature | Specification |
-|---------|---------------|
-| **Isolation** | Each execution runs in a dedicated Docker container |
-| **Memory Limit** | 128MB per container |
-| **CPU Limit** | 1 CPU core per container |
-| **Execution Timeout** | 30 seconds maximum |
-| **Network Access** | Disabled (no internet access) |
-| **User Privileges** | Non-root user execution |
-| **File System** | Read-only code mounting |
-| **Resource Cleanup** | Automatic container termination after execution |
-
-**No Guarantees**: This IDE is not suitable for untrusted malicious code. Use it only for education, testing, and development.
-
-## 📊 Supported Languages
-
-| Language | Version | Runtime Image |
-|----------|---------|----------------|
-| **Python** | 3.11 | `online-ide-python` |
-| **C++** | GCC 13 | `online-ide-cpp` |
-| **Node.js** | 20 | `online-ide-nodejs` |
-
-### Python Example
-```python
-def factorial(n):
-    if n <= 1:
-        return 1
-    return n * factorial(n - 1)
-
-print(f"5! = {factorial(5)}")
-```
-
-### C++ Example
-```cpp
-#include <iostream>
-using namespace std;
-
-int main() {
-    cout << "C++ is awesome!" << endl;
-    return 0;
-}
-```
-
-### Node.js Example
-```javascript
-const greet = (name) => `Hello, ${name}!`;
-console.log(greet("World"));
-```
-
-## 🐛 Troubleshooting
-
-### Docker Compose Fails to Start
-```bash
-# Check Docker daemon is running
-docker ps
-
-# View detailed logs
-docker compose logs -f
-
-# Rebuild images
-docker compose down
 docker compose up --build
 ```
 
-### Port Already in Use
-```bash
-# Find process using port 3000
-lsof -i :3000
+启动后访问：
 
-# Kill the process
-kill -9 <PID>
+- 前端：`http://<服务器IP>:3000`
+- 后端健康检查：`http://<服务器IP>:5000/api/health`
 
-# Or change ports in docker-compose.yml
+> 若服务器有公网 IP，放通安全组/防火墙端口 `3000`（前端）和可选 `5000`（调试 API）。
+
+## 首次登录
+
+系统在 MongoDB 中不存在老师账号时会自动创建默认老师：
+
+- 用户名：`teacher`
+- 密码：`teacher123`
+
+请上线后立刻在用户管理中修改默认密码，并替换 JWT 密钥。
+
+## 环境变量
+
+### backend/.env
+
+```env
+PORT=5000
+MONGO_URI=mongodb://mongodb:27017/online-ide
+JWT_SECRET=replace-with-a-secure-random-string
+DEFAULT_TEACHER_USERNAME=teacher
+DEFAULT_TEACHER_PASSWORD=teacher123
+CORS_ORIGIN=*
 ```
 
-### Code Execution Timeout
-- Increase timeout in `backend/src/services/dockerService.js`
-- Default is 30 seconds
-- Maximum recommended: 60 seconds
+### frontend/.env
 
-### MongoDB Connection Issues
-```bash
-# Check MongoDB container
-docker compose ps
-
-# View MongoDB logs
-docker compose logs mongodb
+```env
+REACT_APP_API_URL=/api
 ```
 
-### Frontend Can't Connect to Backend
-- Verify backend is running: `curl http://localhost:5000/health`
-- Check `REACT_APP_API_URL` environment variable
-- Ensure firewall isn't blocking port 5000
+- Docker/Nginx 场景建议保持 `/api`（同域反向代理）
+- 本地前端开发模式可改为 `http://<服务器IP>:5000/api`
 
-## 🤝 Contributing
+## API 变更摘要
 
-Contributions are welcome! Please follow these steps:
+- `POST /api/auth/login` 登录
+- `GET /api/auth/me` 获取当前用户
+- `GET/POST/PUT/DELETE /api/users` 老师用户管理
+- `GET/POST /api/submissions...` 提交与查看提交
+- `GET/POST/PUT/DELETE /api/files` 仅访问本人文件
+- `POST /api/execute` 需登录且具备运行权限
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. **Commit** changes: `git commit -m 'Add amazing feature'`
-4. **Push** to branch: `git push origin feature/amazing-feature`
-5. **Submit** a Pull Request
+## 前端使用流程
 
-### Development Guidelines
-- Follow existing code style
-- Add tests for new features
-- Update documentation
-- Keep commit messages clear and descriptive
+- 老师：
+  - 登录后可打开「用户管理」添加/删除学生或老师账号
+  - 在「学生提交」中查看并载入学生提交代码
+- 学生：
+  - 仅看到自己的文件列表
+  - 点击「提交给老师」选择老师并提交
+  - 在「我的提交」查看历史提交
 
-## 📝 License
+## 局域网/公网部署建议
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+1. 使用 Docker Compose 在服务器启动服务。
+2. 通过 `服务器IP:3000` 统一访问前端。
+3. 使用 Nginx `/api` 代理后端，避免浏览器跨域配置复杂化。
+4. 公网部署建议再加一层反向代理（如 Caddy/Nginx）并启用 HTTPS。
 
-## 🙏 Acknowledgments
+## 目录结构
 
-- [Monaco Editor](https://microsoft.github.io/monaco-editor/) - Code editor
-- [React](https://react.dev/) - UI framework
-- [Docker](https://www.docker.com/) - Containerization
-- [MongoDB](https://www.mongodb.com/) - Database
-- [Express.js](https://expressjs.com/) - Backend framework
-
-## 📧 Support & Contact
-
-- **Issues**: Report bugs via [GitHub Issues](https://github.com/vishak45/online-IDE/issues)
-- **Discussions**: Join our [GitHub Discussions](https://github.com/vishak45/online-IDE/discussions)
-- **Email**: support@example.com
-
----
-
-<div align="center">
-
-**Made with ❤️ by the Online IDE Team**
-
-[GitHub](https://github.com/vishak45/online-IDE) • [Live Demo](https://online-ide.example.com)
-
-</div>
+```text
+online-IDE/
+├── docker-compose.yml
+├── backend/
+│   ├── src/
+│   │   ├── bootstrap/seedDefaultTeacher.js
+│   │   ├── middleware/auth.js
+│   │   ├── models/{User,File,Submission}.js
+│   │   ├── routes/{auth,users,files,execute,submissions}.js
+│   │   └── server.js
+├── frontend/
+│   ├── nginx.conf
+│   └── src/
+│       ├── App.js
+│       ├── components/
+│       │   ├── LoginForm.js
+│       │   ├── UserManagement.js
+│       │   ├── SubmissionPanel.js
+│       │   └── SubmitCodeModal.js
+│       └── services/api.js
+└── Docker/
+```

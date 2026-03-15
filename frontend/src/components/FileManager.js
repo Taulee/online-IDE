@@ -1,27 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getFiles, deleteFile } from '../services/api';
 
-function FileManager({ onSelect, onClose }) {
+function FileManager({ onSelect, onClose, canDelete = true, refreshKey = 0 }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadFiles();
-  }, []);
-
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getFiles();
-      setFiles(data);
+      setFiles(data.files || []);
       setError(null);
     } catch (err) {
       setError('Failed to load files');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadFiles();
+  }, [loadFiles, refreshKey]);
 
   const handleDelete = async (e, fileId) => {
     e.stopPropagation();
@@ -29,7 +29,7 @@ function FileManager({ onSelect, onClose }) {
     
     try {
       await deleteFile(fileId);
-      setFiles(files.filter(f => f._id !== fileId));
+      setFiles((prev) => prev.filter((f) => f._id !== fileId));
     } catch (err) {
       setError('Failed to delete file');
     }
@@ -79,12 +79,14 @@ function FileManager({ onSelect, onClose }) {
                 <span className="file-name">{file.name}</span>
                 <span className="file-date">{formatDate(file.updatedAt)}</span>
               </div>
-              <button 
-                className="delete-btn"
-                onClick={(e) => handleDelete(e, file._id)}
-              >
-                🗑️
-              </button>
+              {canDelete && (
+                <button 
+                  className="delete-btn"
+                  onClick={(e) => handleDelete(e, file._id)}
+                >
+                  🗑️
+                </button>
+              )}
             </li>
           ))}
         </ul>

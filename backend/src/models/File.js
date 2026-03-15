@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const fileSchema = new mongoose.Schema({
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
   name: {
     type: String,
     required: true
@@ -14,19 +20,8 @@ const fileSchema = new mongoose.Schema({
     enum: ['python', 'cpp', 'nodejs'],
     required: true
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-fileSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('File', fileSchema);

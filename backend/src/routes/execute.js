@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { executeCode } = require('../services/dockerService');
+const { authenticateToken, requirePermission } = require('../middleware/auth');
+
+router.use(authenticateToken);
 
 // Execute code
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('canRunCode'), async (req, res) => {
   try {
     const { code, language, stdin } = req.body;
 

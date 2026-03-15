@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const File = require('../models/File');
+const { authenticateToken, requirePermission } = require('../middleware/auth');
+
+router.use(authenticateToken);
 
 // Get all files
 router.get('/', async (req, res) => {
   try {
-    const files = await File.find().sort({ updatedAt: -1 });
-    res.json(files);
+    const files = await File.find({ owner: req.user._id }).sort({ updatedAt: -1 });
+    res.json({ success: true, files });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -15,18 +18,18 @@ router.get('/', async (req, res) => {
 // Get single file
 router.get('/:id', async (req, res) => {
   try {
-    const file = await File.findById(req.params.id);
+    const file = await File.findOne({ _id: req.params.id, owner: req.user._id });
     if (!file) {
       return res.status(404).json({ error: 'File not found' });
     }
-    res.json(file);
+    res.json({ success: true, file });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Create file
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('canSaveFiles'), async (req, res) => {
   try {
     const { name, content, language } = req.body;
     
@@ -34,21 +37,26 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Name and language are required' });
     }
 
-    const file = new File({ name, content, language });
+    const file = new File({
+      owner: req.user._id,
+      name,
+      content,
+      language
+    });
     await file.save();
-    res.status(201).json(file);
+    res.status(201).json({ success: true, file });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Update file
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('canSaveFiles'), async (req, res) => {
   try {
     const { name, content, language } = req.body;
     
-    const file = await File.findByIdAndUpdate(
-      req.params.id,
+    const file = await File.findOneAndUpdate(
+      { _id: req.params.id, owner: req.user._id },
       { name, content, language, updatedAt: Date.now() },
       { new: true }
     );
@@ -57,22 +65,22 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
     
-    res.json(file);
+    res.json({ success: true, file });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Delete file
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requirePermission('canSaveFiles'), async (req, res) => {
   try {
-    const file = await File.findByIdAndDelete(req.params.id);
+    const file = await File.findOneAndDelete({ _id: req.params.id, owner: req.user._id });
     
     if (!file) {
       return res.status(404).json({ error: 'File not found' });
     }
     
-    res.json({ message: 'File deleted successfully' });
+    res.json({ success: true, message: 'File deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
