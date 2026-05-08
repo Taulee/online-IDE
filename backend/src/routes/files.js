@@ -6,7 +6,7 @@ const { authenticateToken, requirePermission } = require('../middleware/auth');
 router.use(authenticateToken);
 const VALID_LANGUAGES = ['python', 'cpp', 'nodejs'];
 
-// Get all files
+// 获取全部文件
 router.get('/', async (req, res) => {
   try {
     const files = await File.find({ owner: req.user._id }).sort({ updatedAt: -1 });
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single file
+// 获取单个文件
 router.get('/:id', async (req, res) => {
   try {
     const file = await File.findOne({ _id: req.params.id, owner: req.user._id });
@@ -29,7 +29,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create file
+// 创建文件
 router.post('/', requirePermission('canSaveFiles'), async (req, res) => {
   try {
     const name = (req.body.name || '').trim();
@@ -55,7 +55,7 @@ router.post('/', requirePermission('canSaveFiles'), async (req, res) => {
   }
 });
 
-// Update file
+// 更新文件
 router.put('/:id', requirePermission('canSaveFiles'), async (req, res) => {
   try {
     const name = (req.body.name || '').trim();
@@ -84,7 +84,7 @@ router.put('/:id', requirePermission('canSaveFiles'), async (req, res) => {
   }
 });
 
-// Delete file
+// 删除文件
 router.delete('/:id', requirePermission('canSaveFiles'), async (req, res) => {
   try {
     const file = await File.findOneAndDelete({ _id: req.params.id, owner: req.user._id });

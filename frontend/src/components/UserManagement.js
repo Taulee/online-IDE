@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { createUser, getUsers, removeUser, updateUser } from '../services/api';
+import {
+  createUser,
+  getUsers,
+  removeUser,
+  updateUser
+} from '../services/api';
 
 const DEFAULT_STUDENT_PERMISSIONS = {
   canRunCode: true,

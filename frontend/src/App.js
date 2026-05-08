@@ -7,9 +7,12 @@ import LoginForm from './components/LoginForm';
 import SubmitCodeModal from './components/SubmitCodeModal';
 import SubmissionPanel from './components/SubmissionPanel';
 import UserManagement from './components/UserManagement';
+import AiSettingsModal from './components/AiSettingsModal';
+import AiGuidanceModal from './components/AiGuidanceModal';
 import {
   clearToken,
   executeCode,
+  generateAiGuidance,
   getCurrentUser,
   getFile,
   hasToken,
@@ -61,9 +64,15 @@ function App() {
   const [currentFile, setCurrentFile] = useState(null);
   const [showFileManager, setShowFileManager] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showAiSettings, setShowAiSettings] = useState(false);
   const [showSubmissionPanel, setShowSubmissionPanel] = useState(false);
   const [submissionPanelMode, setSubmissionPanelMode] = useState('student');
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showAiGuidanceModal, setShowAiGuidanceModal] = useState(false);
+  const [aiGuidanceLoading, setAiGuidanceLoading] = useState(false);
+  const [aiGuidance, setAiGuidance] = useState('');
+  const [aiGuidanceError, setAiGuidanceError] = useState('');
+  const [lastFailedExecution, setLastFailedExecution] = useState(null);
   const [fileRefreshKey, setFileRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -96,8 +105,13 @@ function App() {
     setStdin('');
     setShowFileManager(false);
     setShowUserManagement(false);
+    setShowAiSettings(false);
     setShowSubmissionPanel(false);
     setShowSubmitModal(false);
+    setShowAiGuidanceModal(false);
+    setAiGuidance('');
+    setAiGuidanceError('');
+    setLastFailedExecution(null);
   }, []);
 
   const handleLanguageChange = useCallback((newLanguage) => {
@@ -115,6 +129,10 @@ function App() {
 
     setIsRunning(true);
     setOutput('运行中...\n');
+    setLastFailedExecution(null);
+    setAiGuidance('');
+    setAiGuidanceError('');
+    setShowAiGuidanceModal(false);
 
     try {
       const result = await executeCode(code, language, stdin);
@@ -123,6 +141,20 @@ function App() {
       if (result.error) blocks.push(`[Error]\n${result.error}`);
       if (!result.success && result.exitCode !== undefined) {
         blocks.push(`[Exit Code: ${result.exitCode}]`);
+      }
+
+      if (!result.success) {
+        setLastFailedExecution({
+          code,
+          language,
+          stdin,
+          executionResult: {
+            success: false,
+            output: result.output || '',
+            error: result.error || '',
+            exitCode: result.exitCode
+          }
+        });
       }
 
       const outputText = blocks.join('\n');
@@ -134,10 +166,33 @@ function App() {
         return;
       }
       setOutput(`[Error] ${getErrorMessage(error, '代码执行请求失败，请稍后重试')}`);
+      setLastFailedExecution(null);
     } finally {
       setIsRunning(false);
     }
   }, [code, language, logout, stdin, user]);
+
+  const handleRequestAiGuidance = useCallback(async () => {
+    if (!lastFailedExecution) return;
+
+    setShowAiGuidanceModal(true);
+    setAiGuidanceLoading(true);
+    setAiGuidance('');
+    setAiGuidanceError('');
+
+    try {
+      const data = await generateAiGuidance(lastFailedExecution);
+      setAiGuidance(data.guidance || 'AI 未返回教学指导内容。');
+    } catch (error) {
+      if (error.response?.status === 401) {
+        logout();
+        return;
+      }
+      setAiGuidanceError(getErrorMessage(error, 'AI 教学指导生成失败'));
+    } finally {
+      setAiGuidanceLoading(false);
+    }
+  }, [lastFailedExecution, logout]);
 
   const handleSave = useCallback(async () => {
     if (!user?.permissions?.canSaveFiles) {
@@ -247,6 +302,15 @@ function App() {
             </button>
           )}
 
+          {canManageUsers && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowAiSettings(true)}
+            >
+              AI 设置
+            </button>
+          )}
+
           {canReviewSubmissions && (
             <button
               className="btn btn-secondary"
@@ -351,7 +415,12 @@ function App() {
               placeholder="在这里输入程序标准输入，每行一个值..."
             />
           </div>
-          <OutputTerminal output={output} />
+          <OutputTerminal
+            output={output}
+            canRequestAiGuidance={Boolean(lastFailedExecution)}
+            onRequestAiGuidance={handleRequestAiGuidance}
+            aiGuidanceLoading={aiGuidanceLoading}
+          />
         </div>
       </main>
 
@@ -362,6 +431,19 @@ function App() {
         defaultFileName={currentFile?.name || `main.${getExtension(language)}`}
         onClose={() => setShowSubmitModal(false)}
         onSuccess={() => setOutput('代码已提交给老师')}
+      />
+
+      <AiSettingsModal
+        open={showAiSettings}
+        onClose={() => setShowAiSettings(false)}
+      />
+
+      <AiGuidanceModal
+        open={showAiGuidanceModal}
+        loading={aiGuidanceLoading}
+        error={aiGuidanceError}
+        guidance={aiGuidance}
+        onClose={() => setShowAiGuidanceModal(false)}
       />
     </div>
   );

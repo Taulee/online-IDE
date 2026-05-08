@@ -24,7 +24,7 @@ const LANGUAGE_CONFIG = {
   }
 };
 
-const EXECUTION_TIMEOUT = 30000; // 30 seconds
+const EXECUTION_TIMEOUT = 30000; // 30 秒
 const MEMORY_LIMIT = 128 * 1024 * 1024; // 128MB
 
 async function executeCode(code, language, stdin = '') {
@@ -42,12 +42,12 @@ async function executeCode(code, language, stdin = '') {
   let container = null;
 
   try {
-    // Create temp directory and write code + stdin
+    // 创建临时目录并写入代码和标准输入
     await fs.mkdir(tempDir, { recursive: true });
     await fs.writeFile(filepath, code);
     await fs.writeFile(stdinPath, stdin);
 
-    // Create container
+    // 创建容器
     container = await docker.createContainer({
       Image: config.image,
       Cmd: config.command(filename),
@@ -64,10 +64,10 @@ async function executeCode(code, language, stdin = '') {
       User: 'runner'
     });
 
-    // Start container
+    // 启动容器
     await container.start();
 
-    // Wait for completion with timeout
+    // 等待执行完成或超时
     const result = await Promise.race([
       container.wait(),
       new Promise((_, reject) => 
@@ -75,14 +75,14 @@ async function executeCode(code, language, stdin = '') {
       )
     ]);
 
-    // Get logs
+    // 获取日志
     const logs = await container.logs({
       stdout: true,
       stderr: true,
       follow: false
     });
 
-    // Parse logs (remove Docker stream headers)
+    // 解析日志，移除 Docker 流头部
     const output = parseDockerLogs(logs);
 
     return {
@@ -120,11 +120,11 @@ async function executeCode(code, language, stdin = '') {
   } finally {
     await removeContainer(container);
 
-    // Cleanup temp directory
+    // 清理临时目录
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (e) {
-      // Ignore cleanup errors
+      // 忽略清理失败
     }
   }
 }
@@ -177,7 +177,7 @@ function parseDockerLogs(buffer) {
   let offset = 0;
 
   while (offset < buffer.length) {
-    // Docker multiplexed stream format
+    // Docker 多路复用流格式
     if (offset + 8 > buffer.length) break;
     
     const streamType = buffer[offset];
@@ -196,7 +196,7 @@ function parseDockerLogs(buffer) {
     offset += 8 + size;
   }
 
-  // If parsing fails, treat entire buffer as stdout
+  // 如果解析失败，将整个缓冲区视为标准输出
   if (!stdout && !stderr && buffer.length > 0) {
     stdout = buffer.toString('utf8');
   }

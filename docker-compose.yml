@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Frontend - React App with Nginx
+  # 前端服务：React 应用，通过 Nginx 提供访问
   frontend:
     build:
       context: ./frontend
@@ -13,7 +13,7 @@ services:
     networks:
       - online-ide-network
 
-  # Backend - Node.js API
+  # 后端服务：Node.js API
   backend:
     build:
       context: ./backend
@@ -27,6 +27,10 @@ services:
       - DEFAULT_TEACHER_USERNAME=teacher
       - DEFAULT_TEACHER_PASSWORD=teacher123
       - CORS_ORIGIN=*
+      - AI_API_BASE_URL=https://api.siliconflow.cn/v1
+      - AI_MODEL=deepseek-ai/DeepSeek-V3
+      - AI_TIMEOUT_MS=60000
+      - AI_CONFIG_SECRET=please-change-this-ai-config-secret
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/online-ide:/tmp/online-ide
@@ -35,7 +39,7 @@ services:
     networks:
       - online-ide-network
 
-  # MongoDB Database
+  # MongoDB 数据库
   mongodb:
     image: mongo:7
     ports:
@@ -45,7 +49,7 @@ services:
     networks:
       - online-ide-network
 
-  # Python Compiler Image
+  # Python 运行镜像
   python-compiler:
     build:
       context: ./Docker/python
@@ -53,7 +57,7 @@ services:
     image: online-ide-python
     command: echo "Python compiler image built"
 
-  # C++ Compiler Image
+  # C++ 编译运行镜像
   cpp-compiler:
     build:
       context: ./Docker/cpp
@@ -61,7 +65,7 @@ services:
     image: online-ide-cpp
     command: echo "C++ compiler image built"
 
-  # Node.js Runtime Image
+  # Node.js 运行镜像
   nodejs-runtime:
     build:
       context: ./Docker/nodejs

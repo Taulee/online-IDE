@@ -32,7 +32,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auth
+// 鉴权
 export async function login(username, password) {
   const response = await api.post('/auth/login', { username, password });
   return response.data;
@@ -43,13 +43,18 @@ export async function getCurrentUser() {
   return response.data;
 }
 
-// Execute code
+// 执行代码
 export async function executeCode(code, language, stdin = '') {
   const response = await api.post('/execute', { code, language, stdin });
   return response.data;
 }
 
-// File operations
+export async function generateAiGuidance(payload) {
+  const response = await api.post('/execute/guidance', payload, { timeout: 90000 });
+  return response.data;
+}
+
+// 文件操作
 export async function getFiles() {
   const response = await api.get('/files');
   return response.data;
@@ -75,7 +80,7 @@ export async function deleteFile(id) {
   return response.data;
 }
 
-// Users (teacher)
+// 用户管理（老师）
 export async function getUsers() {
   const response = await api.get('/users');
   return response.data;
@@ -96,7 +101,23 @@ export async function removeUser(userId) {
   return response.data;
 }
 
-// Submissions
+// AI 设置（老师）
+export async function getAiSettings() {
+  const response = await api.get('/ai-settings');
+  return response.data;
+}
+
+export async function saveAiSettings(payload) {
+  const response = await api.put('/ai-settings', payload);
+  return response.data;
+}
+
+export async function clearAiApiKey() {
+  const response = await api.delete('/ai-settings');
+  return response.data;
+}
+
+// 提交记录
 export async function getTeachers() {
   const response = await api.get('/submissions/teachers');
   return response.data;

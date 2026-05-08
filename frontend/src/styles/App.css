@@ -13,7 +13,7 @@
   font-size: 18px;
 }
 
-/* Header */
+/* 头部 */
 .header {
   display: flex;
   align-items: center;
@@ -64,7 +64,7 @@
   flex-wrap: wrap;
 }
 
-/* Buttons */
+/* 按钮 */
 .btn {
   padding: 8px 12px;
   border: none;
@@ -98,12 +98,17 @@
   background-color: #3b3e44;
 }
 
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .danger-btn {
   border-color: #8f3a3a;
   color: #f5b6b6;
 }
 
-/* Language Selector */
+/* 语言选择器 */
 .language-selector {
   display: flex;
   gap: 4px;
@@ -135,7 +140,7 @@
   color: white;
 }
 
-/* Main Content */
+/* 主体内容 */
 .main {
   display: flex;
   flex: 1;
@@ -157,7 +162,7 @@
   border-left: 1px solid var(--border-color);
 }
 
-/* Code Editor */
+/* 代码编辑器 */
 .code-editor {
   display: flex;
   flex-direction: column;
@@ -174,7 +179,7 @@
   color: var(--text-secondary);
 }
 
-/* Output Terminal */
+/* 输出终端 */
 .output-terminal {
   display: flex;
   flex-direction: column;
@@ -191,6 +196,18 @@
   border-bottom: 1px solid var(--border-color);
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.terminal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.terminal-ai-btn {
+  padding: 5px 8px;
+  font-size: 12px;
 }
 
 .terminal-actions {
@@ -223,7 +240,7 @@
   word-break: break-word;
 }
 
-/* Stdin Input */
+/* 标准输入 */
 .stdin-section {
   display: flex;
   flex-direction: column;
@@ -254,7 +271,7 @@
   outline: none;
 }
 
-/* Left Drawers */
+/* 左侧抽屉 */
 .file-manager,
 .drawer-panel {
   position: absolute;
@@ -387,7 +404,7 @@
   color: #f5b6b6;
 }
 
-/* Forms */
+/* 表单 */
 .form-block {
   display: flex;
   flex-direction: column;
@@ -401,6 +418,13 @@
 
 .form-block h4 {
   font-size: 13px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .form-block input,
@@ -442,7 +466,13 @@
   color: #ff8d8d;
 }
 
-/* Login */
+.inline-message {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 登录 */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -485,7 +515,7 @@
   font-size: 12px;
 }
 
-/* Modal */
+/* 弹窗 */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -505,6 +535,69 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.ai-settings-modal {
+  width: min(560px, 92vw);
+}
+
+.ai-guidance-modal {
+  width: min(720px, 92vw);
+  max-height: min(720px, 86vh);
+}
+
+.modal-header,
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.settings-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.guidance-content {
+  min-height: 220px;
+  max-height: 56vh;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: #0d1117;
+}
+
+.guidance-content pre {
+  margin: 0;
+  padding: 16px;
+  color: #c9d1d9;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 @media (max-width: 980px) {

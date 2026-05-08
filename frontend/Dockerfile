@@ -1,4 +1,4 @@
-# Build stage
+# 构建阶段
 FROM node:20-slim AS builder
 
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY src ./src
 
 RUN npm run build
 
-# Production stage
+# 生产阶段
 FROM nginx:alpine
 
 COPY --from=builder /app/build /usr/share/nginx/html
