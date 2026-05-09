@@ -1,4 +1,4 @@
-# Online IDE（多用户教学版）
+# Online IDE
 
 一个基于 Docker 沙箱执行的在线编程平台，支持 Python / C++ / Node.js。项目包含老师/学生角色体系、权限控制、文件隔离、代码提交与审阅。
 
@@ -90,7 +90,7 @@ online-IDE/
 ### 5.1 依赖前提
 
 - Docker Engine + Docker Compose
-- 建议 Linux 服务器（需允许挂载 `/var/run/docker.sock`）
+- 需允许挂载 `/var/run/docker.sock`
 
 ### 5.2 一键启动
 
@@ -108,7 +108,7 @@ docker compose up --build -d
 - 用户名：`teacher`
 - 密码：`teacher123`
 
-建议上线后立即修改默认密码与 `JWT_SECRET`。
+建议上线后修改默认密码与 `JWT_SECRET`。
 
 ## 6. 环境变量
 
@@ -154,9 +154,9 @@ REACT_APP_API_URL=/api
 1. 生成 `executionId`，创建临时目录：`/tmp/online-ide/<executionId>`
 2. 写入代码文件与 `stdin.txt`
 3. 基于语言选择镜像与命令：
-   - Python：`python3 main.py < /code/stdin.txt`
-   - C++：`g++ ... && /tmp/output < /code/stdin.txt`
-   - Node.js：`node main.js < /code/stdin.txt`
+    - Python：`python3 main.py < /code/stdin.txt`
+    - C++：`g++ ... && /tmp/output < /code/stdin.txt`
+    - Node.js：`node main.js < /code/stdin.txt`
 4. 以 `runner` 用户启动容器，挂载 `/code`（只读）
 5. 等待结束或超时（30 秒）
 6. 读取 stdout/stderr 日志并回传

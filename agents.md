@@ -88,17 +88,6 @@ online-IDE/
 
 ### 架构理解重点
 
-这个项目是前后端分离架构：
-
-```text
-浏览器页面 frontend
-  -> 通过 Axios 请求 /api
-  -> 后端 backend 的 Express 路由
-  -> 需要数据时访问 MongoDB
-  -> 需要运行代码时调用 Docker Engine 创建沙箱容器
-  -> 运行报错后点击 AI 指导按钮，再调用 AI 生成教学指导
-```
-
 学习时建议先按下面顺序阅读：
 
 1. `README.md`：先建立整体概念。
