@@ -280,7 +280,7 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-left">
-          <h1 className="logo">CodeAnywhere</h1>
+          <h1 className="logo">online-IDE</h1>
           <span className="file-name">{currentFile ? currentFile.name : '未命名'}</span>
         </div>
 
@@ -407,12 +407,12 @@ function App() {
         </div>
         <div className="output-container">
           <div className="stdin-section">
-            <div className="stdin-header">输入（stdin）</div>
+            <div className="stdin-header">输入</div>
             <textarea
               className="stdin-input"
               value={stdin}
               onChange={(e) => setStdin(e.target.value)}
-              placeholder="在这里输入程序标准输入，每行一个值..."
+              placeholder="在这里输入..."
             />
           </div>
           <OutputTerminal

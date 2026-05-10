@@ -26,7 +26,7 @@ function LoginForm({ onLoginSuccess }) {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <h1>CodeAnywhere</h1>
+        <h1>online-IDE</h1>
         <p>老师/学生账号登录后即可开始使用</p>
 
         <label htmlFor="username">用户名</label>
@@ -45,7 +45,7 @@ function LoginForm({ onLoginSuccess }) {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="输入密码"
+          placeholder="请输入密码"
           required
         />
 
