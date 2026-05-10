@@ -30,12 +30,12 @@ app.use('/api/users', usersRoutes);
 app.use('/api/submissions', submissionsRoutes);
 app.use('/api/ai-settings', aiSettingsRoutes);
 
-// 健康检查
+// 后端 gealth
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 连接 MongoDB
+// MongoDB
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb:27017/online-ide';
 
 mongoose.connect(MONGO_URI)
