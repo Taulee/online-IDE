@@ -13,6 +13,7 @@
 ```text
 online-IDE/
 ├── README.md                         # 项目说明文档，介绍功能、技术栈、启动方式、API、权限模型和 Docker 执行链路。
+├── 数据字典.md                       # 项目数据字典，整理数据库集合、字段、枚举、关系和主要 API 数据对象。
 ├── ISSUE-exit-code-minus1.md         # 问题记录文档，说明执行服务曾出现 Exit Code -1 的原因、复现和修复思路。
 ├── .gitignore                        # Git 忽略规则，避免提交依赖、构建产物、环境变量等本地文件。
 ├── docker-compose.yml                # Docker Compose 编排文件，定义前端、后端、MongoDB 和各语言运行镜像的启动方式。
