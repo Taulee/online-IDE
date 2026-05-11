@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { buildPermissions } = require('../utils/permissions');
 
 function getJwtSecret() {
   return process.env.JWT_SECRET || 'online-ide-dev-secret-change-me';
@@ -31,10 +30,9 @@ async function authenticateToken(req, res, next) {
 
 function requirePermission(permissionKey) {
   return (req, res, next) => {
-    const currentPermissions = req.user?.permissions?.toObject
-      ? req.user.permissions.toObject()
+    const permissions = req.user?.getEffectivePermissions
+      ? req.user.getEffectivePermissions()
       : req.user?.permissions;
-    const permissions = buildPermissions(req.user?.role, currentPermissions);
     if (!permissions[permissionKey]) {
       return res.status(403).json({ error: '当前账号没有该操作权限' });
     }

@@ -1,6 +1,22 @@
 const mongoose = require('mongoose');
 const { buildPermissions } = require('../utils/permissions');
 
+function getPermissionOverrides(user) {
+  const permissions = user.permissions?.toObject ? user.permissions.toObject() : (user.permissions || {});
+  const overrides = { ...permissions };
+  const defaultPaths = user.$__?.activePaths?.states?.default || {};
+  const isDefaultAiPermission = (
+    (typeof user.$isDefault === 'function' && user.$isDefault('permissions.canManageAiSettings')) ||
+    Boolean(defaultPaths['permissions.canManageAiSettings'])
+  );
+
+  if (isDefaultAiPermission) {
+    delete overrides.canManageAiSettings;
+  }
+
+  return overrides;
+}
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -43,21 +59,24 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('validate', function (next) {
-  this.permissions = buildPermissions(this.role, this.permissions);
+  this.permissions = buildPermissions(this.role, getPermissionOverrides(this));
   if (!this.name) {
     this.name = this.username;
   }
   next();
 });
 
+userSchema.methods.getEffectivePermissions = function getEffectivePermissions() {
+  return buildPermissions(this.role, getPermissionOverrides(this));
+};
+
 userSchema.methods.toPublicJSON = function toPublicJSON() {
-  const currentPermissions = this.permissions?.toObject ? this.permissions.toObject() : this.permissions;
   return {
     _id: this._id,
     username: this.username,
     name: this.name,
     role: this.role,
-    permissions: buildPermissions(this.role, currentPermissions),
+    permissions: this.getEffectivePermissions(),
     isActive: this.isActive,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt

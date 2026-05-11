@@ -86,7 +86,7 @@ export async function deleteFile(id) {
     return response.data;
 }
 
-// 用户管理（老师）
+// 用户管理（teacher）
 export async function getUsers() {
     const response = await api.get("/users");
     return response.data;
@@ -107,7 +107,7 @@ export async function removeUser(userId) {
     return response.data;
 }
 
-// AI 设置（老师）
+// AI 设置（teacher）
 export async function getAiSettings() {
     const response = await api.get("/ai-settings");
     return response.data;

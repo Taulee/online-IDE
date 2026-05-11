@@ -69,7 +69,9 @@ router.put('/:id', async (req, res) => {
     user.role = role;
     user.name = typeof req.body.name === 'string' ? req.body.name.trim() : user.name;
     user.isActive = typeof req.body.isActive === 'boolean' ? req.body.isActive : user.isActive;
-    const currentPermissions = user.permissions?.toObject ? user.permissions.toObject() : user.permissions;
+    const currentPermissions = user.getEffectivePermissions
+      ? user.getEffectivePermissions()
+      : (user.permissions?.toObject ? user.permissions.toObject() : user.permissions);
     user.permissions = buildPermissions(role, req.body.permissions || currentPermissions);
 
     if (typeof req.body.password === 'string' && req.body.password.trim()) {
