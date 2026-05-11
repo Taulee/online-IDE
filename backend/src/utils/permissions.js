@@ -4,6 +4,7 @@ const ROLE_DEFAULT_PERMISSIONS = {
     canSaveFiles: true,
     canSubmitCode: false,
     canManageUsers: true,
+    canManageAiSettings: true,
     canReviewSubmissions: true
   },
   student: {
@@ -11,6 +12,7 @@ const ROLE_DEFAULT_PERMISSIONS = {
     canSaveFiles: true,
     canSubmitCode: true,
     canManageUsers: false,
+    canManageAiSettings: false,
     canReviewSubmissions: false
   }
 };

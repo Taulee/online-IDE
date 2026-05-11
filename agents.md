@@ -47,12 +47,12 @@ online-IDE/
 │       │   ├── files.js              # 个人文件接口，负责代码文件的保存、读取、更新和删除。
 │       │   ├── users.js              # 用户管理接口，供老师创建、修改、停用用户和调整权限。
 │       │   ├── submissions.js        # 代码提交接口，负责学生提交代码、查看自己的提交、老师查看收到的提交。
-│       │   └── aiSettings.js         # AI 设置接口，供有用户管理权限的老师配置系统级 AI API 地址、模型和密钥。
+│       │   └── aiSettings.js         # AI 设置接口，供有 AI 配置权限的老师配置系统级 AI API 地址、模型和密钥。
 │       ├── services/                 # 后端业务服务目录，放置比路由更复杂的核心逻辑。
 │       │   ├── dockerService.js      # Docker 执行核心服务，创建临时目录和容器，运行代码，收集 stdout/stderr，并清理资源。
 │       │   └── aiTutorService.js     # AI 教学指导服务，保存/读取系统级 AI 配置，并按需基于运行错误生成出错原因、知识点和更正样例。
 │       ├── utils/                    # 工具函数目录，放置可复用的小型业务辅助逻辑。
-│       │   └── permissions.js        # 权限工具，定义老师和学生的默认权限结构。
+│       │   └── permissions.js        # 权限工具，定义老师和学生的默认权限结构，包括用户管理和 AI 配置的独立权限。
 │       └── bootstrap/                # 启动初始化逻辑目录。
 │           └── seedDefaultTeacher.js # 后端启动时创建默认老师账号，保证系统首次启动后可以登录管理。
 │
@@ -65,7 +65,7 @@ online-IDE/
 │   │   └── index.html                # 前端 HTML 模板，React 应用最终挂载到这个页面中的 root 节点。
 │   └── src/                          # 前端源码目录。
 │       ├── index.js                  # React 入口文件，把 App 组件挂载到 public/index.html 的 root 节点。
-│       ├── App.js                    # 前端主组件，管理登录状态、代码内容、语言、文件、提交面板和运行按钮等核心状态。
+│       ├── App.js                    # 前端主组件，管理登录状态、代码内容、语言、文件、互斥界面面板和运行按钮等核心状态。
 │       ├── services/                 # 前端服务目录，封装和后端 API 的通信。
 │       │   └── api.js                # Axios API 封装，统一设置 baseURL、JWT 请求头，并导出登录、运行、文件、用户、提交等请求函数。
 │       ├── components/               # React 组件目录，每个组件负责一个相对独立的界面功能。

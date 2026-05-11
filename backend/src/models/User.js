@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema(
       canSaveFiles: { type: Boolean, default: false },
       canSubmitCode: { type: Boolean, default: false },
       canManageUsers: { type: Boolean, default: false },
+      canManageAiSettings: { type: Boolean, default: false },
       canReviewSubmissions: { type: Boolean, default: false }
     },
     isActive: {
@@ -50,12 +51,13 @@ userSchema.pre('validate', function (next) {
 });
 
 userSchema.methods.toPublicJSON = function toPublicJSON() {
+  const currentPermissions = this.permissions?.toObject ? this.permissions.toObject() : this.permissions;
   return {
     _id: this._id,
     username: this.username,
     name: this.name,
     role: this.role,
-    permissions: this.permissions,
+    permissions: buildPermissions(this.role, currentPermissions),
     isActive: this.isActive,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt

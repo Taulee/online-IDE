@@ -11,6 +11,7 @@ const DEFAULT_STUDENT_PERMISSIONS = {
   canSaveFiles: true,
   canSubmitCode: true,
   canManageUsers: false,
+  canManageAiSettings: false,
   canReviewSubmissions: false
 };
 
@@ -19,6 +20,7 @@ const DEFAULT_TEACHER_PERMISSIONS = {
   canSaveFiles: true,
   canSubmitCode: false,
   canManageUsers: true,
+  canManageAiSettings: true,
   canReviewSubmissions: true
 };
 
@@ -32,6 +34,7 @@ const PERMISSION_LABELS = {
   canSaveFiles: '允许保存文件',
   canSubmitCode: '允许提交代码',
   canManageUsers: '允许管理用户',
+  canManageAiSettings: '允许配置 AI',
   canReviewSubmissions: '允许查看提交'
 };
 

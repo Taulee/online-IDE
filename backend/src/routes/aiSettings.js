@@ -9,7 +9,7 @@ const {
 const router = express.Router();
 
 router.use(authenticateToken);
-router.use(requirePermission('canManageUsers'));
+router.use(requirePermission('canManageAiSettings'));
 
 router.get('/', async (req, res) => {
   try {

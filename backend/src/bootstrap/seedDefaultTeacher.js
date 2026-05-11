@@ -22,6 +22,7 @@ async function ensureDefaultTeacher() {
       canSaveFiles: true,
       canSubmitCode: false,
       canManageUsers: true,
+      canManageAiSettings: true,
       canReviewSubmissions: true
     }
   });
