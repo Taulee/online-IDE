@@ -5,6 +5,13 @@ const DEFAULT_PROVIDER = "siliconflow";
 const DEFAULT_API_BASE_URL = "https://api.siliconflow.cn/v1";
 const DEFAULT_MODEL = "deepseek-ai/DeepSeek-V3";
 const DEFAULT_AI_TIMEOUT_MS = 60000;
+const TUTOR_CONTEXT_LIMITS = {
+    code: 3000,
+    stdin: 800,
+    stdout: 800,
+    stderr: 1600,
+};
+const TUTOR_MAX_OUTPUT_TOKENS = 500;
 
 function normalizeApiBaseUrl(apiBaseUrl) {
     return String(apiBaseUrl || DEFAULT_API_BASE_URL)
@@ -157,37 +164,37 @@ function truncateText(text, maxLength) {
 }
 
 function buildTutorPrompt({ code, language, stdin, executionResult }) {
-    return `请根据下面的代码运行错误，给学生一份中文教学指导。
+    return `请根据下面的代码运行错误，给学生一份简短中文教学指导。
 
 要求：
-1. 用清晰、友好、简介、专业的教学口吻，不要只给结论。
+1. 用清晰、友好、简洁、专业的教学口吻。
 2. 必须包含三个小标题：出错原因、涉及的知识点、更正样例。
-3. 更正样例要给出可运行的 ${language} 代码或关键修改片段。
+3. 更正样例优先给关键修改片段，必要时再给可运行的 ${language} 代码。
 4. 如果错误和输入有关，请说明输入格式或边界问题。
 5. 不要编造不存在的报错。
-6. 输出不要包含 markdown 符号。
+6. 输出不要包含 markdown 符号，控制在 500 字以内。
 
 语言：${language}
 退出码：${executionResult.exitCode}
 
 代码：
 \`\`\`${language}
-${truncateText(code, 6000)}
+${truncateText(code, TUTOR_CONTEXT_LIMITS.code)}
 \`\`\`
 
 标准输入 stdin：
 \`\`\`text
-${truncateText(stdin, 2000)}
+${truncateText(stdin, TUTOR_CONTEXT_LIMITS.stdin)}
 \`\`\`
 
 标准输出 stdout：
 \`\`\`text
-${truncateText(executionResult.output, 2000)}
+${truncateText(executionResult.output, TUTOR_CONTEXT_LIMITS.stdout)}
 \`\`\`
 
 错误输出 stderr：
 \`\`\`text
-${truncateText(executionResult.error, 4000)}
+${truncateText(executionResult.error, TUTOR_CONTEXT_LIMITS.stderr)}
 \`\`\``;
 }
 
@@ -224,7 +231,7 @@ async function generateAiGuidance({ code, language, stdin, executionResult }) {
                 body: JSON.stringify({
                     model: settings.model,
                     temperature: 0.2,
-                    max_tokens: 900,
+                    max_tokens: TUTOR_MAX_OUTPUT_TOKENS,
                     messages: [
                         {
                             role: "system",
